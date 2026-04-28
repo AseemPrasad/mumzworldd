@@ -1,0 +1,11 @@
+product_id,product_name,brand,product_category,baby_age_months,issue_type,return_reason,severity,frequency_score,risk_tag,report_date,resolution_status
+p001,Baby Soft Lotion,BrandA,Skincare,2,skin_irritation,Caused rash after first use,6,4,medium,2026-04-01,open
+p002,Ring Teether,BrandB,Toys,6,choking_hazard,Small parts broke off and baby almost swallowed one,9,7,high,2026-03-15,returned
+p003,AntiColic Bottle,BrandC,Feeding,1,leakage,Bottle leaks milk during feeds,5,6,medium,2026-02-20,open
+p004,Newborn Diapers,BrandD,Hygiene,0,poor_fit,Diapers too loose leaks at night,5,5,medium,2026-01-10,exchanged
+p005,Stroller Clip,BrandE,Accessories,8,breakage,Clip snapped after one walk,3,3,low,2026-04-05,open
+p006,Organic Baby Wipes,BrandA,Hygiene,3,skin_irritation,Wipes caused redness on sensitive skin,7,8,high,2026-03-22,returned
+p007,Baby Monitor,BrandF,Electronics,4,connectivity,Monitor disconnects randomly at night,6,5,medium,2026-02-14,open
+p008,Silicone Spoon Set,BrandC,Feeding,5,material_defect,Spoon tip discolored after first wash,4,3,low,2026-01-30,exchanged
+p009,Infant Car Seat,BrandG,Safety,2,harness_issue,Harness buckle difficult to release under pressure,8,6,high,2026-04-10,open
+p010,Baby Sleep Sack,BrandH,Clothing,1,sizing,Zipper broke on first use leaving baby exposed,7,4,medium,2026-03-05,returned

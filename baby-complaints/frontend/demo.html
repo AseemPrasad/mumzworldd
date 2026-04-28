@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Purchase Coherence Engine Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-color: #f7f9fa;
+    --surface: rgba(255, 255, 255, 0.7);
+    --surface-border: rgba(255, 255, 255, 0.5);
+    --text-primary: #1e293b;
+    --text-muted: #64748b;
+    --accent: #f97316;
+    --accent-hover: #ea580c;
+    --input-border: #cbd5e1;
+    --input-bg: #ffffff;
+    --warning-bg: #fffbf1;
+    --warning-border: #fcd34d;
+    --warning-text: #92400e;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-text: #991b1b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 40px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+  }
+
+  /* ── Glass Panel Base ── */
+  .panel {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--surface-border);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h2 span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    background: var(--text-primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Form ── */
+  .form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  input, select, textarea {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    transition: all 0.2s;
+    width: 100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .helper-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* ── Output Panel ── */
+  .output-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
+    min-height: 400px;
+  }
+
+  .placeholder-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+    border: 2px dashed rgba(203, 213, 225, 0.5);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  /* ── Alert Card ── */
+  .alert-card {
+    display: none;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 6px solid var(--accent);
+  }
+
+  .alert-card.deferral {
+    border-left-color: var(--error-text);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .alert-header {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .alert-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .alert-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: var(--text-muted);
+  }
+  
+  .deferral .alert-type {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .alert-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  
+  @media (max-width: 600px) {
+    .alert-body { grid-template-columns: 1fr; }
+  }
+
+  .copy-section {
+    padding: 32px 24px;
+    line-height: 1.6;
+  }
+
+  .en-sec {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+  }
+
+  .ar-sec {
+    font-family: 'Cairo', sans-serif;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    text-align: right;
+    direction: rtl;
+    background: #fafafa;
+    border-left: 1px solid #f1f5f9;
+  }
+
+  .recommend-action {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .action-btn {
+    background: white;
+    border: 1px solid var(--input-border);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  .action-btn:hover { background: #f1f5f9; }
+
+  /* ── Debug Bar ── */
+  .debug-bar {
+    display: none;
+    margin-top: 20px;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    color: #f8fafc;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    animation: fadeIn 0.5s ease 0.2s both;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .debug-bar strong { color: #38bdf8; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: none;
+    width: 20px; height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Input Form -->
+  <div class="panel">
+    <h2>Simulate Session <span>Coherence Engine</span></h2>
+    
+    <form id="auditForm">
+      <div class="form-group">
+        <label>Session ID</label>
+        <input type="text" id="sessionId" value="session_9921a" required />
+      </div>
+
+      <div class="form-group">
+        <label>Triggering Event</label>
+        <select id="triggerEvent">
+          <option value="session_open">Session Open</option>
+          <option value="milestone_crossing">Milestone Crossing</option>
+          <option value="cs_chat">CS Chat Message</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Previous Purchases (SKUs)</label>
+        <input type="text" id="orderHistory" value="p001, p002" placeholder="e.g. p001, p004" />
+        <div class="helper-text">Comma-separated product IDs to simulate backend order history lookup.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Search History</label>
+        <input type="text" id="searchHistory" value="teething, sitting" placeholder="e.g. teething, crawling, newborn" />
+        <div class="helper-text">Keywords used by the agent to infer current child stage.</div>
+      </div>
+
+      <div class="form-group">
+        <label>CS Chat (Optional Symptoms)</label>
+        <textarea id="csChat" placeholder="Type a message regarding the product..."></textarea>
+        <div class="helper-text">Include words like "rash" or "fever" to trigger a medical deferral.</div>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">
+        <span class="btn-text">Run Audit</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+    </form>
+  </div>
+
+  <!-- Output Display -->
+  <div class="output-panel">
+    <div class="placeholder-state" id="placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.5;">
+        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 7v3m0 0v3m0-3h3m-3 0H7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Run an audit to view the coherence engine response.
+    </div>
+
+    <!-- The actual alert card -->
+    <div class="alert-card" id="alertCard">
+      <div class="alert-header">
+        <div class="alert-title">Product Coherence Alert</div>
+        <div class="alert-type" id="alertType">STAGE_MISMATCH</div>
+      </div>
+      
+      <div class="alert-body">
+        <div class="copy-section en-sec" id="copyEn">
+          <!-- English copy injected here -->
+        </div>
+        <div class="copy-section ar-sec" id="copyAr">
+          <!-- Arabic copy injected here -->
+        </div>
+      </div>
+
+      <div class="recommend-action">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;" id="feedbackText">Was this helpful?</span>
+        <button class="action-btn">Not right? Tell us.</button>
+      </div>
+    </div>
+
+    <!-- Empty/Insufficient Data Card -->
+    <div class="alert-card deferral" id="emptyCard" style="border-left-color: var(--text-muted);">
+      <div class="alert-header">
+        <div class="alert-title">Audit Completed</div>
+        <div class="alert-type" style="background: #e2e8f0; color: #475569;">NO_CONFLICT</div>
+      </div>
+      <div class="copy-section" style="text-align: center; color: var(--text-muted); font-size: 0.95rem;" id="emptyMsg">
+        <!-- Message -->
+      </div>
+    </div>
+
+    <!-- Debug Telemetry -->
+    <div class="debug-bar" id="debugBar">
+      <strong>Inferred Age:</strong> <span id="debugAge">-</span> months<br>
+      <strong>Confidence:</strong> <span id="debugConfidence">-</span><br>
+      <strong>Run ID:</strong> <span id="debugRunId">-</span><br>
+      <strong>Null Reason:</strong> <span id="debugNull">-</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.getElementById('auditForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const btnText = document.querySelector('.btn-text');
+  const spinner = document.getElementById('spinner');
+  const placeholder = document.getElementById('placeholder');
+  const alertCard = document.getElementById('alertCard');
+  const emptyCard = document.getElementById('emptyCard');
+  const debugBar = document.getElementById('debugBar');
+  
+  // UI Loading State
+  btnText.style.display = 'none';
+  spinner.style.display = 'block';
+  document.getElementById('submitBtn').disabled = true;
+  placeholder.style.display = 'none';
+  alertCard.style.display = 'none';
+  emptyCard.style.display = 'none';
+  debugBar.style.display = 'none';
+
+  // Build Payload
+  const payload = {
+    session_id: document.getElementById('sessionId').value,
+    triggered_by: document.getElementById('triggerEvent').value,
+    order_history: document.getElementById('orderHistory').value.split(',').map(s => s.trim()).filter(Boolean),
+    search_history: document.getElementById('searchHistory').value.split(',').map(s => s.trim()).filter(Boolean),
+    cs_chat: document.getElementById('csChat').value
+  };
+
+  try {
+    const response = await fetch('http://localhost:8000/coherence/audit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    
+    if (data.coherence_audit) {
+        const audit = data.coherence_audit;
+        
+        // Populate Debug
+        document.getElementById('debugAge').textContent = audit.child_stage?.months ?? 'N/A';
+        document.getElementById('debugConfidence').textContent = audit.child_stage?.confidence ?? '0';
+        document.getElementById('debugRunId').textContent = audit.run_id;
+        document.getElementById('debugNull').textContent = audit.null_reason || audit.child_stage?.null_reason || 'None';
+        debugBar.style.display = 'block';
+
+        if (audit.conflicts && audit.conflicts.length > 0) {
+            // Show Conflict Alert
+            const conflict = audit.conflicts[0]; // Showing just the first conflict for demo
+            document.getElementById('copyEn').textContent = conflict.copy_en;
+            document.getElementById('copyAr').textContent = conflict.copy_ar;
+            document.getElementById('alertType').textContent = conflict.conflict_type.replace(/_/g, ' ').toUpperCase();
+            
+            if (conflict.defer_to_doctor) {
+                alertCard.classList.add('deferral');
+                document.getElementById('alertType').textContent = 'MEDICAL REFERRAL';
+            } else {
+                alertCard.classList.remove('deferral');
+            }
+            alertCard.style.display = 'block';
+        } else {
+            // Show No Conflict State
+            document.getElementById('emptyMsg').textContent = 
+                audit.audit_status === 'insufficient_data' ? 
+                'Insufficient data to raise a high confidence alert.' : 
+                'Stack is coherent. No safety or age-mismatch conflicts detected.';
+            emptyCard.style.display = 'block';
+        }
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert('Failed to connect to backend engine. Ensure running on port 8000.');
+  } finally {
+    // Revert UI Loading
+    btnText.style.display = 'block';
+    spinner.style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>

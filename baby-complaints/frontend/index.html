@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Baby Safety Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #faf8f5;
+    --surface: #ffffff;
+    --border: #e8e2d9;
+    --text: #1a1814;
+    --muted: #7a7268;
+    --accent: #c84b31;
+    --accent-soft: #f5ede9;
+    --high: #c84b31;
+    --medium: #d97706;
+    --low: #2e7d52;
+    --high-bg: #fef2ef;
+    --medium-bg: #fffbeb;
+    --low-bg: #f0faf4;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--text);
+    padding: 24px 40px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 3px solid var(--accent);
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(200,75,49,0.15);
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .api-status {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #555;
+    transition: background 0.3s;
+  }
+  .dot.online { background: #2e7d52; }
+  .dot.error  { background: var(--accent); }
+
+  /* ── Layout ── */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    display: grid;
+    gap: 32px;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 6px;
+  }
+
+  select, button {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.85rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    background: var(--surface);
+    cursor: pointer;
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  select:focus, button:focus { outline: none; border-color: var(--accent); }
+
+  button.primary {
+    background: var(--text);
+    color: white;
+    border-color: var(--text);
+    font-weight: 600;
+  }
+
+  button.primary:hover { background: #2e2a25; }
+
+  /* ── Stats row ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .stat-card.danger .stat-value { color: var(--high); }
+  .stat-card.warn .stat-value   { color: var(--medium); }
+  .stat-card.safe .stat-value   { color: var(--low); }
+
+  /* ── Grid: chart + table ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 24px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  .card-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .chart-wrap {
+    padding: 24px;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th:hover { color: var(--text); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+
+  td {
+    padding: 12px 16px;
+    vertical-align: middle;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .badge.high   { background: var(--high-bg);   color: var(--high); }
+  .badge.medium { background: var(--medium-bg); color: var(--medium); }
+  .badge.low    { background: var(--low-bg);    color: var(--low); }
+
+  .score-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    width: 80px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 0.6s ease;
+  }
+
+  .score-fill.medium { background: var(--medium); }
+  .score-fill.low    { background: var(--low); }
+
+  .score-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    width: 36px;
+    text-align: right;
+  }
+
+  /* ── Empty / loading state ── */
+  .empty {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Tooltip ── */
+  .tip {
+    max-width: 280px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Baby Safety Dashboard</h1>
+  <span>v0.1.0</span>
+  <div class="api-status">
+    <div class="dot" id="dot"></div>
+    <span id="api-url">API: http://localhost:8000</span>
+  </div>
+</header>
+
+<main>
+  <!-- Controls -->
+  <div class="controls">
+    <div>
+      <label for="apiBase">API Base</label>
+      <input id="apiBase" type="text" value="http://localhost:8000"
+        style="font-family:'DM Mono',monospace;font-size:0.82rem;border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;width:220px;background:var(--surface);" />
+    </div>
+    <div>
+      <label for="threshold">Risk Filter</label>
+      <select id="threshold">
+        <option value="">All</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div>
+      <label for="topN">Top N</label>
+      <select id="topN">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+      </select>
+    </div>
+    <button class="primary" onclick="fetchAll()">↻ Refresh</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats">
+    <div class="stat-card danger">
+      <div class="stat-label">High Risk</div>
+      <div class="stat-value" id="count-high">—</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">Medium Risk</div>
+      <div class="stat-value" id="count-medium">—</div>
+    </div>
+    <div class="stat-card safe">
+      <div class="stat-label">Low Risk</div>
+      <div class="stat-value" id="count-low">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Composite Score</div>
+      <div class="stat-value" id="avg-score">—</div>
+    </div>
+  </div>
+
+  <!-- Chart + Table -->
+  <div class="grid-2">
+    <!-- Bar Chart: Issues by Category -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Issues by Category</div>
+        <div class="card-meta" id="chart-meta">loading…</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="issuesChart" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- Risk Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Risk Rankings</div>
+        <div class="card-meta" id="table-meta">loading…</div>
+      </div>
+      <div id="table-wrap">
+        <div class="empty"><span class="spinner"></span> Loading…</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>Baby Product Safety Dashboard · Data is synthetic and for demonstration only</footer>
+
+<script>
+let chart = null;
+
+function base() {
+  return document.getElementById('apiBase').value.replace(/\/$/, '');
+}
+
+async function api(path) {
+  const r = await fetch(base() + path);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+function riskColor(tag) {
+  return { high: '#c84b31', medium: '#d97706', low: '#2e7d52' }[tag] || '#999';
+}
+
+async function fetchStats() {
+  try {
+    const [high, medium, low] = await Promise.all([
+      api('/risks?threshold=high&top_n=50'),
+      api('/risks?threshold=medium&top_n=50'),
+      api('/risks?threshold=low&top_n=50'),
+    ]);
+    document.getElementById('count-high').textContent   = high.data?.length   ?? 0;
+    document.getElementById('count-medium').textContent = medium.data?.length ?? 0;
+    document.getElementById('count-low').textContent    = low.data?.length    ?? 0;
+
+    const all = [...(high.data||[]), ...(medium.data||[]), ...(low.data||[])];
+    const avg = all.length ? (all.reduce((s,x)=>s+x.composite_score,0)/all.length).toFixed(3) : '—';
+    document.getElementById('avg-score').textContent = avg;
+  } catch(e) { console.error('stats error', e); }
+}
+
+async function fetchChart() {
+  try {
+    const res = await api('/issues?group_by=product_category&top_n=10');
+    const groups = res.data || [];
+    document.getElementById('chart-meta').textContent = `${groups.length} categories`;
+
+    const labels = groups.map(g => g.group_key);
+    const data   = groups.map(g => g.count);
+    const colors = groups.map((_,i) => `hsl(${i*37+15},65%,${50+i*3}%)`);
+
+    if (chart) { chart.destroy(); }
+    chart = new Chart(document.getElementById('issuesChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Complaints',
+          data,
+          backgroundColor: colors,
+          borderRadius: 5,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.raw} complaint${ctx.raw!==1?'s':''}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#e8e2d9' },
+            ticks: { font: { family: 'DM Mono', size: 11 }, color: '#7a7268' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { family: 'Plus Jakarta Sans', size: 12 }, color: '#1a1814' }
+          }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('chart-meta').textContent = 'error';
+    console.error('chart error', e);
+  }
+}
+
+async function fetchTable() {
+  const threshold = document.getElementById('threshold').value;
+  const topN      = document.getElementById('topN').value;
+  const qs = `?top_n=${topN}${threshold ? '&threshold='+threshold : ''}`;
+
+  document.getElementById('table-wrap').innerHTML =
+    '<div class="empty"><span class="spinner"></span> Loading…</div>';
+  document.getElementById('table-meta').textContent = 'loading…';
+
+  try {
+    const res = await api('/risks' + qs);
+    const rows = res.data || [];
+    document.getElementById('table-meta').textContent =
+      `${rows.length} products · sorted by score`;
+
+    if (!rows.length) {
+      document.getElementById('table-wrap').innerHTML =
+        '<div class="empty">No products match the current filter.</div>';
+      return;
+    }
+
+    const tbody = rows.map(r => {
+      const pct = (r.composite_score * 100).toFixed(0);
+      const barClass = r.risk_tag === 'high' ? '' : r.risk_tag;
+      return `<tr>
+        <td><strong>${r.product_name}</strong><br><span style="font-size:0.72rem;color:var(--muted)">${r.brand} · ${r.product_category}</span></td>
+        <td><span class="badge ${r.risk_tag}">${r.risk_tag}</span></td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar">
+              <div class="score-fill ${barClass}" style="width:${pct}%"></div>
+            </div>
+            <span class="score-num">${r.composite_score.toFixed(3)}</span>
+          </div>
+        </td>
+        <td class="tip" title="${r.return_reason}">${r.return_reason}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('table-wrap').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Risk</th>
+            <th>Score</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>${tbody}</tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML =
+      `<div class="empty">⚠ Could not load data. Is the API running at <code>${base()}</code>?</div>`;
+    document.getElementById('table-meta').textContent = 'error';
+  }
+}
+
+async function checkHealth() {
+  const dot = document.getElementById('dot');
+  const url = document.getElementById('api-url');
+  url.textContent = 'API: ' + base();
+  try {
+    const r = await api('/health');
+    if (r.ok) { dot.className = 'dot online'; }
+    else       { dot.className = 'dot error'; }
+  } catch { dot.className = 'dot error'; }
+}
+
+async function fetchAll() {
+  await checkHealth();
+  await Promise.all([fetchStats(), fetchChart(), fetchTable()]);
+}
+
+// Auto-refresh every 30s
+fetchAll();
+setInterval(fetchAll, 30000);
+
+// Update API URL label on change
+document.getElementById('apiBase').addEventListener('change', fetchAll);
+</script>
+</body>
+</html>

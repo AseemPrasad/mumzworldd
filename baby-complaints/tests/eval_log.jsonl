@@ -1,0 +1,9 @@
+{"ts": "2026-04-28T06:33:57.191316", "event": "single_signal_conflict", "passed": true, "details": {"conflicts": 0}}
+{"ts": "2026-04-28T06:33:57.203942", "event": "hallucinated_age_null", "passed": true, "details": {"months": null}}
+{"ts": "2026-04-28T06:33:57.205008", "event": "hallucinated_age_null_reason", "passed": true, "details": {"null_reason": "insufficient_data"}}
+{"ts": "2026-04-28T06:33:57.220626", "event": "longitudinal_drift", "passed": true, "details": {"estimates": [1, 6, 12]}}
+{"ts": "2026-04-28T06:33:57.229496", "event": "medical_deferral_status", "passed": true, "details": {"audit_status": "deferred"}}
+{"ts": "2026-04-28T06:33:57.230601", "event": "medical_deferral_actions", "passed": true, "details": {"conflicts": []}}
+{"ts": "2026-04-28T06:33:57.332267", "event": "confidence_output_low_conf_presence", "passed": true, "details": {"count": 50}}
+{"ts": "2026-04-28T06:33:57.333036", "event": "confidence_output_mismatch", "passed": true, "details": {"non_null_copy": 0}}
+{"ts": "2026-04-28T06:33:57.481376", "event": "schema_validation_100_outputs", "passed": true, "details": {"status": "completed"}}
