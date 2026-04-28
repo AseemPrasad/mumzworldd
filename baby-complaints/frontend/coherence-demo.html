@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Purchase Coherence Engine — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --accent: #f97316;
+    --accent-light: #fff7ed;
+    --accent-hover: #ea580c;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --yellow: #d97706;
+    --yellow-light: #fffbeb;
+    --badge-radius: 6px;
+    --card-radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-title h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+  .header-title p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 4px 8px;
+    border-radius: var(--badge-radius);
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-neutral { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+  .badge-orange  { background: var(--accent-light); color: var(--accent); border: 1px solid #fed7aa; }
+  .badge-red     { background: var(--red-light);    color: var(--red);    border: 1px solid #fecaca; }
+  .badge-green   { background: var(--green-light);  color: var(--green);  border: 1px solid #bbf7d0; }
+  .badge-blue    { background: var(--blue-light);   color: var(--blue);   border: 1px solid #bfdbfe; }
+  .badge-yellow  { background: var(--yellow-light); color: var(--yellow); border: 1px solid #fde68a; }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    height: calc(100vh - 69px);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 4px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+  }
+  .scenario-btn {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+  }
+  .scenario-btn:hover { background: var(--accent-light); border-color: #fed7aa; }
+  .scenario-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(249,115,22,0.15);
+  }
+  .scenario-btn .sname {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .scenario-btn .sdesc {
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .scenario-btn .sicon { font-size: 1.1rem; }
+  .severity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sev-9 { background: #dc2626; }
+  .sev-8 { background: #f97316; }
+  .sev-7 { background: #d97706; }
+  .sev-5 { background: #2563eb; }
+  .sev-3 { background: #16a34a; }
+
+  .run-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(249,115,22,0.25);
+  }
+  .run-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .run-btn:active { transform: translateY(0); }
+  .run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Main content ── */
+  .main {
+    padding: 32px 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--muted);
+    padding: 60px;
+    min-height: 400px;
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 0.85rem; line-height: 1.5; max-width: 320px; }
+
+  /* ── Result cards ── */
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .result-header-left { display: flex; align-items: center; gap: 10px; }
+  .result-title { font-size: 1rem; font-weight: 700; }
+  .badge-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+  }
+  .section-card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .section-card-body { padding: 20px; }
+
+  /* ── Stage inference ── */
+  .stage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stage-stat { display: flex; flex-direction: column; gap: 4px; }
+  .stage-stat-label { font-size: 0.72rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stage-stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .stage-stat-sub { font-size: 0.75rem; color: var(--muted); }
+
+  .confidence-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .confidence-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .evidence-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .evidence-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+  }
+
+  /* ── Conflict cards ── */
+  .conflict-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    animation: fadeSlide 0.35s ease both;
+  }
+  .conflict-card:last-child { margin-bottom: 0; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .conflict-card-head {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .conflict-card-head.severity-high { background: #fff5f5; border-left: 4px solid #dc2626; }
+  .conflict-card-head.severity-med  { background: #fff8f0; border-left: 4px solid #f97316; }
+  .conflict-card-head.severity-low  { background: #fffef0; border-left: 4px solid #d97706; }
+  .conflict-product { font-size: 0.88rem; font-weight: 600; }
+  .conflict-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+  .conflict-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .copy-en, .copy-ar {
+    padding: 20px;
+    line-height: 1.65;
+    font-size: 0.9rem;
+  }
+  .copy-ar {
+    font-family: 'Cairo', sans-serif;
+    font-size: 1.05rem;
+    direction: rtl;
+    text-align: right;
+    background: var(--surface-2);
+    border-left: 1px solid var(--border);
+  }
+  .copy-lang-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .conflict-foot {
+    padding: 12px 18px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .foot-stats { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .foot-stat { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .foot-stat strong { color: var(--text); font-weight: 600; }
+  .action-pill {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .action-defer { background: var(--red-light); color: var(--red); }
+  .action-replace { background: var(--blue-light); color: var(--blue); }
+
+  /* ── LLM trace ── */
+  .llm-trace {
+    background: #0f172a;
+    border-radius: var(--card-radius);
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: #94a3b8;
+    animation: fadeSlide 0.4s ease 0.1s both;
+  }
+  .llm-trace .trace-line { padding: 2px 0; }
+  .llm-trace .t-key { color: #38bdf8; }
+  .llm-trace .t-val { color: #a5f3fc; }
+  .llm-trace .t-str { color: #86efac; }
+  .llm-trace .t-num { color: #fca5a5; }
+  .llm-trace .t-head { color: #e2e8f0; font-weight: 500; margin-bottom: 4px; }
+
+  /* ── No conflict state ── */
+  .no-conflict {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: var(--green-light);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; height: auto; overflow: auto; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); height: auto; }
+    .conflict-body { grid-template-columns: 1fr; }
+    .copy-ar { border-left: none; border-top: 1px solid var(--border); }
+    .stage-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">
+    <div>
+      <h1>🛡️ Purchase Coherence Engine</h1>
+      <p>Real-time baby product safety audit · Mumzworld Demo</p>
+    </div>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <span class="badge badge-neutral">5 Scenarios</span>
+    <span class="badge badge-orange">LLM Fallback Ready</span>
+    <span class="badge badge-blue">EN + AR</span>
+    <span id="llmBadge" class="badge badge-neutral" style="display:none">⚡ LLM Analyzed</span>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-label">Demo Scenarios</div>
+
+    <button class="scenario-btn active" data-scenario="honey_botulism" onclick="selectScenario(this)">
+      <div class="sname"><span class="sicon">🍯</span> <span class="severity-dot sev-9"></span> Honey Botulism</div>
+      <div class="sdesc">2-month-old · Honey Teething Gel · Botulism risk (WHO/AAP)</div>
+    </button>
+
+    <button class="scenario-btn" data-scenario="choking_hazard" onclick="selectScenario(this)">
+      <div class="sname"><span class="sicon">⚠️</span> <span class="severity-dot sev-8"></span> Choking Hazard</div>
+      <div class="sdesc">4-month-old · Ring Teether with Beads · Small parts risk</div>
+    </button>
+
+    <button class="scenario-btn" data-scenario="fragrance_sensitivity" onclick="selectScenario(this)">
+      <div class="sname"><span class="sicon">🌸</span> <span class="severity-dot sev-7"></span> Fragrance Sensitivity</div>
+      <div class="sdesc">1-month-old · Scented Lotion · Skin irritation + rash</div>
+    </button>
+
+    <button class="scenario-btn" data-scenario="formula_transition" onclick="selectScenario(this)">
+      <div class="sname"><span class="sicon">🍼</span> <span class="severity-dot sev-3"></span> Formula Transition</div>
+      <div class="sdesc">6-month-old · Stage 1 Formula · Nutritional stage mismatch</div>
+    </button>
+
+    <button class="scenario-btn" data-scenario="allergen_too_early" onclick="selectScenario(this)">
+      <div class="sname"><span class="sicon">🥜</span> <span class="severity-dot sev-8"></span> Allergen Too Early</div>
+      <div class="sdesc">3-month-old · Peanut Puffs · Allergen introduction risk</div>
+    </button>
+
+    <div class="sidebar-label" style="margin-top:12px;">Run Analysis</div>
+    <button class="run-btn" id="runBtn" onclick="runDemo()">
+      <span id="btnText">▶ Analyze Scenario</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+
+    <div style="font-size:0.72rem; color:var(--muted); text-align:center; line-height:1.4; margin-top:8px;">
+      Calls <code style="background:var(--border);padding:1px 4px;border-radius:3px;">/coherence/demo?scenario=…</code>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="mainContent">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">🔍</div>
+      <h3>Select a scenario and click Analyze</h3>
+      <p>Each scenario demonstrates a real conflict type detected by the 5-layer Purchase Coherence Engine using WHO/AAP guidelines.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let selectedScenario = 'honey_botulism';
+
+function selectScenario(btn) {
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedScenario = btn.dataset.scenario;
+}
+
+async function runDemo() {
+  const btn = document.getElementById('runBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btnText');
+  const main = document.getElementById('mainContent');
+  const llmBadge = document.getElementById('llmBadge');
+
+  btn.disabled = true;
+  btnText.style.display = 'none';
+  spinner.style.display = 'block';
+  llmBadge.style.display = 'none';
+
+  try {
+    const resp = await fetch(`/coherence/demo?scenario=${selectedScenario}`);
+    if (!resp.ok) { throw new Error(`HTTP ${resp.status}`); }
+    const data = await resp.json();
+    renderResult(data.coherence_audit, main, llmBadge);
+  } catch (err) {
+    main.innerHTML = `
+      <div style="padding:24px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:#991b1b; font-size:0.88rem;">
+        <strong>Connection error:</strong> ${err.message}<br>
+        <small style="color:#b91c1c;">Ensure the backend is running on port 8000.</small>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.style.display = 'inline';
+    spinner.style.display = 'none';
+  }
+}
+
+function renderResult(audit, container, llmBadge) {
+  const statusColors = {
+    complete: 'badge-green',
+    partial: 'badge-yellow',
+    insufficient_data: 'badge-neutral',
+    deferred: 'badge-red',
+    schema_error: 'badge-red',
+  };
+
+  const stage = audit.child_stage || {};
+  const conflicts = audit.conflicts || [];
+  const confPct = stage.confidence ? Math.round(stage.confidence * 100) : 0;
+  const hasLLM = conflicts.some(c => c.llm_analyzed);
+  if (hasLLM) llmBadge.style.display = 'inline-block';
+
+  let html = `
+    <div class="result-header">
+      <div class="result-header-left">
+        <span class="result-title">Audit Result</span>
+        <div class="badge-row">
+          <span class="badge ${statusColors[audit.audit_status] || 'badge-neutral'}">${audit.audit_status.toUpperCase()}</span>
+          ${conflicts.length > 0 ? `<span class="badge badge-orange">${conflicts.length} Conflict${conflicts.length > 1 ? 's' : ''} Detected</span>` : ''}
+          ${hasLLM ? '<span class="badge badge-blue">⚡ LLM Analyzed</span>' : '<span class="badge badge-neutral">Heuristic Analysis</span>'}
+        </div>
+      </div>
+      <span style="font-family:\'DM Mono\',monospace; font-size:0.7rem; color:var(--muted);">${audit.run_id ? audit.run_id.substring(0,8) : '—'}</span>
+    </div>`;
+
+  // Child Stage Inference
+  html += `
+    <div class="section-card">
+      <div class="section-card-header">📊 Child Stage Inference</div>
+      <div class="section-card-body">
+        <div class="stage-grid">
+          <div class="stage-stat">
+            <div class="stage-stat-label">Estimated Age</div>
+            <div class="stage-stat-value">${stage.months !== null && stage.months !== undefined ? stage.months + ' mo' : 'N/A'}</div>
+            <div class="stage-stat-sub">${stage.null_reason ? stage.null_reason.replace(/_/g,' ') : 'Inferred from signals'}</div>
+          </div>
+          <div class="stage-stat">
+            <div class="stage-stat-label">Confidence</div>
+            <div class="stage-stat-value">${confPct}%</div>
+            <div class="confidence-bar"><div class="confidence-fill" style="width:${confPct}%"></div></div>
+          </div>
+          <div class="stage-stat">
+            <div class="stage-stat-label">Triggered By</div>
+            <div class="stage-stat-value" style="font-size:0.9rem;margin-top:4px;">${(audit.triggered_by || '').replace(/_/g,' ')}</div>
+          </div>
+        </div>
+        ${(stage.evidence && stage.evidence.length > 0) ? `
+        <div class="evidence-list">
+          ${stage.evidence.map(e => `<span class="evidence-tag">${e}</span>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
+
+  // Conflicts
+  if (conflicts.length === 0) {
+    html += `<div class="no-conflict">✅ No high-confidence conflicts detected in this purchase stack.</div>`;
+  } else {
+    html += `<div class="section-card"><div class="section-card-header">⚡ Detected Conflicts</div><div class="section-card-body">`;
+    conflicts.forEach((c, i) => {
+      const severity = c.confidence >= 0.85 ? 'severity-high' : c.confidence >= 0.70 ? 'severity-med' : 'severity-low';
+      const actionClass = c.action === 'flag_with_doctor_referral' ? 'action-defer' : 'action-replace';
+      const actionLabel = c.action === 'flag_with_doctor_referral' ? '🚨 Doctor Referral' : '🔄 Replace Product';
+      const conflictLabel = c.conflict_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      html += `
+        <div class="conflict-card" style="animation-delay:${i * 0.05}s">
+          <div class="conflict-card-head ${severity}">
+            <div>
+              <div class="conflict-product">${c.product_name}</div>
+              <div class="conflict-meta">${conflictLabel} · SKU: ${c.product_sku}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span class="badge ${c.confidence >= 0.85 ? 'badge-red' : c.confidence >= 0.70 ? 'badge-orange' : 'badge-yellow'}">${Math.round(c.confidence * 100)}% confidence</span>
+              ${c.defer_to_doctor ? '<span class="badge badge-red">⚕️ Defer to Doctor</span>' : ''}
+              ${c.llm_analyzed ? '<span class="badge badge-blue">⚡ LLM</span>' : ''}
+            </div>
+          </div>
+          <div class="conflict-body">
+            <div class="copy-en">
+              <span class="copy-lang-label">English</span>
+              ${c.copy_en || '<em style="color:var(--muted)">No copy generated (confidence below threshold)</em>'}
+            </div>
+            <div class="copy-ar">
+              <span class="copy-lang-label" style="text-align:right;display:block;">العربية</span>
+              ${c.copy_ar || '<em style="color:var(--muted)">لا توجد نسخة (الثقة أقل من الحد الأدنى)</em>'}
+            </div>
+          </div>
+          <div class="conflict-foot">
+            <div class="foot-stats">
+              <div class="foot-stat">Signals: <strong>${c.signals_supporting}</strong></div>
+              <div class="foot-stat">Evidence: <strong style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(c.evidence_source || '').substring(0, 60)}…</strong></div>
+            </div>
+            <span class="action-pill ${actionClass}">${actionLabel}</span>
+          </div>
+        </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // LLM Trace
+  html += `
+    <div class="llm-trace">
+      <div class="trace-line t-head">// Audit Trace</div>
+      <div class="trace-line"><span class="t-key">run_id</span>: <span class="t-str">"${audit.run_id || '—'}"</span></div>
+      <div class="trace-line"><span class="t-key">audit_status</span>: <span class="t-str">"${audit.audit_status}"</span></div>
+      <div class="trace-line"><span class="t-key">child_stage.months</span>: <span class="t-num">${stage.months !== null && stage.months !== undefined ? stage.months : 'null'}</span></div>
+      <div class="trace-line"><span class="t-key">child_stage.confidence</span>: <span class="t-num">${stage.confidence !== null && stage.confidence !== undefined ? stage.confidence : 'null'}</span></div>
+      <div class="trace-line"><span class="t-key">conflicts_detected</span>: <span class="t-num">${conflicts.length}</span></div>
+      <div class="trace-line"><span class="t-key">llm_analyzed</span>: <span class="t-num">${hasLLM}</span></div>
+      ${audit.null_reason ? `<div class="trace-line"><span class="t-key">null_reason</span>: <span class="t-str">"${audit.null_reason}"</span></div>` : ''}
+      <div class="trace-line"><span class="t-key">schema_version</span>: <span class="t-str">"${audit.schema_version || '1.0'}"</span></div>
+    </div>`;
+
+  container.innerHTML = html;
+}
+</script>
+
+</body>
+</html>

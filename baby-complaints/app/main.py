@@ -48,6 +48,9 @@ app.include_router(coherence.router, prefix="/coherence", tags=["Coherence Engin
 # Mount frontend static files so they can be accessed directly from the server
 app.mount("/ui", StaticFiles(directory="frontend", html=True), name="ui")
 
+# Mount demo UI so /demo serves the coherence demo HTML
+app.mount("/demo", StaticFiles(directory="frontend", html=True), name="demo")
+
 
 # ── LLM endpoint ──────────────────────────────────────────────────────────────
 from app.models.schemas import LLMRequest, LLMResponse
@@ -114,6 +117,13 @@ async def generic_exception_handler(request: Request, exc: Exception):
 def on_startup():
     logger.info("Loading data on startup…")
     get_df()
+
+    logger.info("Initializing conflict rules loader…")
+    from app.core.conflict_loader import init_conflict_loader
+    init_conflict_loader()
+
+    logger.info("Initializing RAG corpus…")
     from app.core.rag import init_rag
     init_rag()
+
     logger.info("Startup complete.")
