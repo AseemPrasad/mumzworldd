@@ -1,4 +1,5 @@
 import logging
+import re
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -7,39 +8,42 @@ AUTHORITATIVE_SOURCES = {"who_guideline", "aap_guideline", "catalog_rule"}
 # Single chromadb client in-memory
 chroma_client = None
 collection = None
+_rag_vocab: dict[str, int] = {}
+
+
+def _tokenize(text: str) -> list[str]:
+    return re.findall(r"[a-zA-Z]+", text.lower())
+
+
+def _bow_embed(text: str, vocab: dict[str, int]) -> list[float]:
+    import numpy as np
+    vec = np.zeros(len(vocab), dtype=np.float32)
+    for token in _tokenize(text):
+        idx = vocab.get(token)
+        if idx is not None:
+            vec[idx] += 1.0
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec /= norm
+    return vec.tolist()
 
 
 def init_rag():
     """
     Initialize the ChromaDB RAG collection from the synthetic CSV data.
+    Uses an offline bag-of-words embedding — no network access required.
     """
-    global chroma_client, collection
-    logger.info("Initializing RAG ChromaDB collection...")
-
-    try:
-        import chromadb
-        chroma_client = chromadb.Client()
-        collection = chroma_client.get_or_create_collection(name="baby_safety_corpus")
-    except ImportError:
-        logger.error("ChromaDB not installed, RAG will mock.")
-        return
-    except Exception as e:
-        logger.error("Failed to init chromadb: %s", e)
-        return
+    global chroma_client, collection, _rag_vocab
+    logger.info("Initializing RAG ChromaDB collection…")
 
     from app.core.data_loader import get_df
     df = get_df()
 
-    # Check if we already populated it
-    if collection.count() >= len(df):
-        logger.info("RAG collection already populated")
-        return
+    docs_raw: list[str] = []
+    ids: list[str] = []
+    metadatas: list[dict] = []
 
-    documents = []
-    ids = []
-    metadatas = []
-
-    for idx, row in df.iterrows():
+    for _, row in df.iterrows():
         brand = row.get("brand", "")
         product = row.get("product_name", "")
         issue = row.get("issue_type", "")
@@ -53,9 +57,8 @@ def init_rag():
             f"Conflict/Issue: {issue}. "
             f"Details/Reason: {reason}."
         )
-        documents.append(chunk)
+        docs_raw.append(chunk)
         ids.append(row["product_id"])
-
         metadatas.append({
             "product_name": product,
             "issue_type": issue,
@@ -64,9 +67,53 @@ def init_rag():
             "source_type": "catalog_rule",
         })
 
-    if documents:
-        collection.add(documents=documents, metadatas=metadatas, ids=ids)
-        logger.info("RAG collection populated with %d items.", len(documents))
+    # Build offline vocabulary
+    vocab: dict[str, int] = {}
+    for doc in docs_raw:
+        for token in _tokenize(doc):
+            if token not in vocab:
+                vocab[token] = len(vocab)
+    _rag_vocab = vocab
+
+    try:
+        import chromadb
+        from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
+
+        class _WrappedEF(EmbeddingFunction):
+            def __init__(self, v: dict[str, int]):
+                self._v = v
+            def __call__(self, input: Documents) -> Embeddings:
+                return [_bow_embed(t, self._v) for t in input]
+
+        chroma_client = chromadb.EphemeralClient()
+        ef = _WrappedEF(_rag_vocab)
+        collection = chroma_client.get_or_create_collection(
+            name="baby_safety_corpus",
+            embedding_function=ef,
+        )
+    except ImportError:
+        logger.error("ChromaDB not installed, RAG disabled.")
+        return
+    except Exception as e:
+        logger.error("Failed to init chromadb: %s", e)
+        return
+
+    if collection.count() >= len(df):
+        logger.info("RAG collection already populated")
+        return
+
+    embeddings = [_bow_embed(doc, _rag_vocab) for doc in docs_raw]
+    try:
+        collection.add(
+            documents=docs_raw,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            ids=ids,
+        )
+        logger.info("RAG collection populated with %d items.", len(docs_raw))
+    except Exception as e:
+        logger.error("Failed to populate RAG collection: %s", e)
+        collection = None
 
 
 def _query_conflict_rules(query_text: str) -> list[dict]:
@@ -141,6 +188,10 @@ def detect_conflicts(child_stage: dict, enriched_stack: list) -> list:
     from app.core.llm_conflict_analyzer import analyze_conflict
 
     global collection
+    # Lazy-initialize RAG collection if not already done
+    if collection is None:
+        init_rag()
+
     conflicts = []
     months = child_stage.get("months")
     if months is None:
@@ -167,7 +218,8 @@ def detect_conflicts(child_stage: dict, enriched_stack: list) -> list:
         csv_hit = None
         if collection is not None:
             try:
-                results = collection.query(query_texts=[query], n_results=1)
+                query_emb = _bow_embed(query, _rag_vocab)
+                results = collection.query(query_embeddings=[query_emb], n_results=1)
                 if results.get("documents") and results["documents"][0]:
                     csv_distance = results["distances"][0][0] if results.get("distances") else 1.0
                     csv_relevance = max(0.0, 1.0 - (csv_distance / 2.0))
