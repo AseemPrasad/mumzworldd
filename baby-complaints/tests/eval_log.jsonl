@@ -7,3 +7,12 @@
 {"ts": "2026-04-28T06:33:57.332267", "event": "confidence_output_low_conf_presence", "passed": true, "details": {"count": 50}}
 {"ts": "2026-04-28T06:33:57.333036", "event": "confidence_output_mismatch", "passed": true, "details": {"non_null_copy": 0}}
 {"ts": "2026-04-28T06:33:57.481376", "event": "schema_validation_100_outputs", "passed": true, "details": {"status": "completed"}}
+{"ts": "2026-04-28T15:34:44.128785", "event": "single_signal_conflict", "passed": true, "details": {"conflicts": 0}}
+{"ts": "2026-04-28T15:34:44.134265", "event": "hallucinated_age_null", "passed": true, "details": {"months": null}}
+{"ts": "2026-04-28T15:34:44.134354", "event": "hallucinated_age_null_reason", "passed": true, "details": {"null_reason": "insufficient_data"}}
+{"ts": "2026-04-28T15:34:44.150287", "event": "longitudinal_drift", "passed": true, "details": {"estimates": [1, 6, 12]}}
+{"ts": "2026-04-28T15:34:44.156591", "event": "medical_deferral_status", "passed": true, "details": {"audit_status": "deferred"}}
+{"ts": "2026-04-28T15:34:44.156665", "event": "medical_deferral_actions", "passed": true, "details": {"conflicts": ["flag_with_doctor_referral"]}}
+{"ts": "2026-04-28T15:34:44.285649", "event": "confidence_output_low_conf_presence", "passed": true, "details": {"count": 50}}
+{"ts": "2026-04-28T15:34:44.285745", "event": "confidence_output_mismatch", "passed": true, "details": {"non_null_copy": 0}}
+{"ts": "2026-04-28T15:34:44.604840", "event": "schema_validation_100_outputs", "passed": true, "details": {"status": "completed"}}
