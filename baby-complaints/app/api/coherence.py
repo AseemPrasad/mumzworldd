@@ -79,7 +79,7 @@ _DEMO_SCENARIOS: dict[str, AuditRequest] = {
     "choking_hazard": AuditRequest(
         session_id="demo_choking_hazard",
         triggered_by=TriggerEvent.session_open,
-        order_history=["p002"],          # Ring Teether with Beads — age 4 months
+        order_history=["p002"],          # Ring Teether with Beads — age 6 months
         search_history=["teething", "sit"],
         cs_chat="",
     ),
@@ -100,7 +100,7 @@ _DEMO_SCENARIOS: dict[str, AuditRequest] = {
     "allergen_too_early": AuditRequest(
         session_id="demo_allergen_too_early",
         triggered_by=TriggerEvent.session_open,
-        order_history=["p005"],          # Peanut Butter Baby Puffs — age 3 months
+        order_history=["p005"],          # Peanut Butter Baby Puffs — age 1 month
         search_history=["newborn", "colic"],
         cs_chat="",
     ),
@@ -114,10 +114,10 @@ async def demo_audit(scenario: str = "honey_botulism"):
 
     Available scenarios:
     - honey_botulism        : 2-month-old, honey teething gel (botulism risk, severity 9)
-    - choking_hazard        : 4-month-old, ring teether with beads (choking risk, severity 8)
+    - choking_hazard        : 6-month-old, ring teether with beads (choking risk, severity 8)
     - fragrance_sensitivity : 1-month-old, scented lotion (skin irritation + rash, severity 7)
     - formula_transition    : 6-month-old, Stage 1 formula (stage mismatch, severity 3)
-    - allergen_too_early    : 3-month-old, peanut product (allergen risk, severity 8)
+    - allergen_too_early    : 1-month-old, peanut product (allergen risk, severity 8)
     """
     req = _DEMO_SCENARIOS.get(scenario, _DEMO_SCENARIOS["honey_botulism"])
     return _run_with_demo_data(req)

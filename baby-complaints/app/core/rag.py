@@ -151,13 +151,14 @@ def _count_signals(item: dict, months: int, rule_hits: list[dict]) -> tuple[int,
     # Signal 2: age mismatch against rule's safe age range
     for hit in rule_hits:
         age_safe_min = int(hit["metadata"].get("age_safe_min_months", 0))
+        # Use >= for upper bound so the transition month (e.g. 6mo for a 0-6mo rule) triggers
         age_safe_max = int(hit["metadata"].get("age_safe_max_months", -1))
         if age_safe_min > 0 and months < age_safe_min:
             supporting_signals += 1
             if not conflict_type:
                 conflict_type = hit["metadata"].get("conflict_type", "stage_mismatch")
             break
-        if age_safe_max != -1 and months > age_safe_max:
+        if age_safe_max != -1 and months >= age_safe_max:
             supporting_signals += 1
             if not conflict_type:
                 conflict_type = "stage_mismatch"
@@ -168,6 +169,25 @@ def _count_signals(item: dict, months: int, rule_hits: list[dict]) -> tuple[int,
         supporting_signals += 1
         if not conflict_type:
             conflict_type = item.get("issue_type", "ingredient_age_safety")
+
+    # Signal 4: product category matches a rule's product_categories
+    # Independent verification that the rule applies to this product type
+    if supporting_signals < 2 and rule_hits:
+        try:
+            from app.core.conflict_loader import get_rule_by_id
+            item_cat = item.get("category", "").lower()
+            for hit in rule_hits:
+                rule_id = hit["metadata"].get("rule_id", "")
+                full_rule = get_rule_by_id(rule_id)
+                if full_rule:
+                    rule_cats = [c.lower() for c in full_rule.get("product_categories", [])]
+                    if any(item_cat in rc or rc in item_cat for rc in rule_cats):
+                        supporting_signals += 1
+                        if not conflict_type:
+                            conflict_type = full_rule.get("conflict_type", "stage_mismatch")
+                        break
+        except Exception as e:
+            logger.debug("Category signal lookup failed: %s", e)
 
     return supporting_signals, conflict_type
 
@@ -206,6 +226,7 @@ def detect_conflicts(child_stage: dict, enriched_stack: list) -> list:
         query = (
             f"Safety conflict for {item['name']} "
             f"category {item.get('category', '')} "
+            f"issue_type {item.get('issue_type', '')} "
             f"ingredients {ingredient_str} "
             f"for {months} month old baby."
         )

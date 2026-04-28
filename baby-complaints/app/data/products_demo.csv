@@ -1,9 +1,9 @@
 product_id,product_name,brand,product_category,baby_age_months,issue_type,return_reason,severity,frequency_score,risk_tag,report_date,resolution_status
 p001,Honey Teething Gel 30ml,NatureBaby,Teething,2,ingredient_age_safety,Product contains honey which is unsafe for babies under 12 months - botulism risk,9,8,high,2026-03-01,open
-p002,Ring Teether with Beads,TinyGrip,Toys,4,choking_hazard,Small detachable beads pose choking risk for infants under 8 months,8,7,high,2026-03-02,returned
+p002,Ring Teether with Beads,TinyGrip,Toys,6,choking_hazard,Small detachable beads pose choking risk for infants under 8 months,8,7,high,2026-03-02,returned
 p003,Lavender Scented Baby Lotion,ScentedCare,Skincare,1,skin_irritation,Fragrance caused rash and redness on newborn skin,7,6,high,2026-03-03,returned
 p004,Stage 1 Infant Formula 900g,NutriStart,Feeding,6,stage_mismatch,Baby at 6 months needs Stage 2 formula for nutritional transition,3,4,medium,2026-03-04,open
-p005,Peanut Butter Baby Puffs,EarlyBites,Food,3,ingredient_age_safety,Peanut product introduced too early before 6 months - allergen risk,8,7,high,2026-03-05,returned
+p005,Peanut Butter Baby Puffs,EarlyBites,Food,1,ingredient_age_safety,Peanut product introduced too early before 6 months - allergen risk,8,7,high,2026-03-05,returned
 p006,Organic Baby Wipes,PureWipe,Hygiene,3,skin_irritation,Wipes caused redness on sensitive skin,7,8,high,2026-03-22,returned
 p007,Baby Monitor HD,SafeHome,Electronics,4,connectivity,Monitor disconnects randomly at night,6,5,medium,2026-02-14,open
 p008,Silicone Spoon Set,SoftFeed,Feeding,5,material_defect,Spoon tip discolored after first wash,4,3,low,2026-01-30,exchanged
