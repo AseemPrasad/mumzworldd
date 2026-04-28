@@ -158,3 +158,23 @@ During early testing, Case 3 (Deferral Override) failed because "redness" was no
 2. **Production Database Integration:** Swap the synthetic CSV loader and in-memory ChromaDB for production connections to Snowflake/BigQuery and a persistent vector store (like Pinecone or Qdrant).
 3. **Gift Detection:** Implement a sub-heuristic in the Milestone Estimator to detect and isolate anomalous purchases (likely gifts) so they do not corrupt the primary child's developmental timeline.
 4. **Correction Feedback Loop:** Fully wire the "Not right? Tell us" frontend button to an automated evaluation pipeline that adjusts signal weights when correction rates exceed the 15% threshold.
+
+
+## Note
+
+The LLM calls are genuinely implemented. This is not just a hardcoded facade, but there are explicit fallback mechanisms built-in.
+
+The exactness of what is dynamic (real AI) and what is hardcoded (heuristics) in the current codebase,
+If you look inside app/core/llm_client.py, the generate_bilingual_copy() function makes a real API call to OpenRouter (defaulting to openai/gpt-3.5-turbo or whatever you set in your .env).
+
+It constructs a dynamic prompt injecting the specific product_name, months, confidence, and evidence_source.
+It enforces a strict system prompt and uses response_format: {"type": "json_object"} to guarantee it returns valid JSON containing copy_en and copy_ar.
+The "Shortcut": If you do not provide an OPENROUTER_API_KEY in your .env file, or if the API request times out, it explicitly catches the error and degrades to a _fallback_copy() function. This fallback uses a hardcoded template. This is a deliberate design choice so the demo doesn't crash if your API key expires during a presentation.
+
+Similarly, when the RAG system finds a potential match (e.g., Honey + 2 Months Old), it sends it to an LLM Conflict Analyzer (analyze_conflict()) to act as a judge. It asks the LLM to rate the severity and confidence. If the API key is missing, it falls back to passing whatever the basic RAG vector distance scored it at.
+
+In app/core/rag.py, the system uses an offline "Bag-of-Words" (BoW) algorithm (_bow_embed) to match product issues to guidelines, rather than making a network call to OpenAI for semantic embeddings. It's a functional mathematical approximation, but it's a shortcut to keep the demo completely offline and fast.
+
+In app/core/estimator.py, the search_term_shift detector looks for exact keyword matches in a hardcoded list: ["newborn", "diaper", "colic"] -> maps to Month 1, or ["teething", "sit", "crawl"] -> maps to Month 6. In a production system, you would use an LLM to cluster the semantics of a search term, but here it is a hardcoded if/elif block.
+
+The architecture is completely real and functional. The LLM integration is fully written and works. The only "hardcoded" parts are the graceful fallbacks when you don't have an API key, and the offline math used to simulate vector embeddings and search clustering.
