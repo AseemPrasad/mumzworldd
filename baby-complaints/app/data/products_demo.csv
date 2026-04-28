@@ -1,0 +1,56 @@
+product_id,product_name,brand,product_category,baby_age_months,issue_type,return_reason,severity,frequency_score,risk_tag,report_date,resolution_status
+p001,Honey Teething Gel 30ml,NatureBaby,Teething,2,ingredient_age_safety,Product contains honey which is unsafe for babies under 12 months - botulism risk,9,8,high,2026-03-01,open
+p002,Ring Teether with Beads,TinyGrip,Toys,4,choking_hazard,Small detachable beads pose choking risk for infants under 8 months,8,7,high,2026-03-02,returned
+p003,Lavender Scented Baby Lotion,ScentedCare,Skincare,1,skin_irritation,Fragrance caused rash and redness on newborn skin,7,6,high,2026-03-03,returned
+p004,Stage 1 Infant Formula 900g,NutriStart,Feeding,6,stage_mismatch,Baby at 6 months needs Stage 2 formula for nutritional transition,3,4,medium,2026-03-04,open
+p005,Peanut Butter Baby Puffs,EarlyBites,Food,3,ingredient_age_safety,Peanut product introduced too early before 6 months - allergen risk,8,7,high,2026-03-05,returned
+p006,Organic Baby Wipes,PureWipe,Hygiene,3,skin_irritation,Wipes caused redness on sensitive skin,7,8,high,2026-03-22,returned
+p007,Baby Monitor HD,SafeHome,Electronics,4,connectivity,Monitor disconnects randomly at night,6,5,medium,2026-02-14,open
+p008,Silicone Spoon Set,SoftFeed,Feeding,5,material_defect,Spoon tip discolored after first wash,4,3,low,2026-01-30,exchanged
+p009,Infant Car Seat,SafeRide,Safety,2,harness_issue,Harness buckle difficult to release under pressure,8,6,high,2026-04-10,open
+p010,Baby Sleep Sack,DreamWear,Clothing,1,sizing,Zipper broke on first use leaving baby exposed,7,4,medium,2026-03-05,returned
+p011,Newborn Diapers Size 1,DryNight,Hygiene,0,poor_fit,Diapers too loose leaks at night,5,5,medium,2026-01-10,exchanged
+p012,Baby Nasal Aspirator,BreathEasy,Health,2,suction,Suction too strong caused discomfort,6,4,medium,2026-02-20,open
+p013,Wooden Rattler,WoodToys,Toys,3,splinter_risk,Wood surface rough may splinter,7,3,medium,2026-04-01,open
+p014,Nursing Pillow,BreastBest,Feeding,0,safety,Pillow too soft risk of suffocation if unsupervised,8,5,high,2026-03-10,returned
+p015,Baby Bath Thermometer,SafeTemp,Health,1,accuracy,Temperature readings inconsistent by 3 degrees,5,4,medium,2026-02-15,open
+p016,Cotton Muslin Swaddle,CalmWrap,Clothing,0,sizing,Too small for average newborn wrapping,4,6,low,2026-01-25,exchanged
+p017,Anti-Colic Bottle Set,ColicFree,Feeding,1,leakage,Bottle valve leaks milk during feeds,5,7,medium,2026-02-01,open
+p018,Baby Carrier Ergonomic,BabyHold,Accessories,3,sizing,Hip seat too narrow for proper positioning,6,4,medium,2026-03-15,open
+p019,Teething Biscuits,FirstBite,Food,4,choking_hazard,Biscuit dissolves too slowly poses choking risk,7,5,high,2026-04-02,returned
+p020,Crib Mobile Musical,DreamPlay,Toys,1,electrical,Battery compartment accessible to infants,8,3,high,2026-01-20,open
+p021,Baby Sunscreen SPF50,SunKid,Skincare,3,skin_irritation,Chemical filter caused allergic reaction,7,6,high,2026-03-28,returned
+p022,Silicone Pacifier,CalmBaby,Accessories,2,material,Silicone discolored after sterilization,5,4,medium,2026-02-10,open
+p023,Organic Formula Stage 2,NutriPlus,Feeding,7,stage_transition,Parent still using stage 1 formula at 7 months,4,5,medium,2026-03-18,open
+p024,Play Mat with Arches,PlayPad,Toys,2,assembly,Arch connection loose may detach and injure,7,3,high,2026-04-08,open
+p025,Baby White Noise Machine,SleepSound,Electronics,1,volume,Max volume exceeds WHO safe infant hearing levels,8,4,high,2026-03-12,open
+p026,Baby Jumper Activity Center,JumpJoy,Toys,4,developmental,AAP advises against baby jumpers for infants under 6 months,6,5,medium,2026-02-22,open
+p027,Sesame Seed Baby Snack,TinyNibble,Food,4,allergen,Sesame introduced before 6 months allergen risk,7,5,high,2026-03-30,returned
+p028,Baby Oil Mineral,SoftSkin,Skincare,2,ingredient,Mineral oil not recommended for newborn skin absorption,6,4,medium,2026-01-15,open
+p029,Rolling Walker,FirstSteps,Toys,8,safety,AAP recommends against baby walkers risk of falls,7,6,high,2026-02-28,returned
+p030,Bottle Warmer Electric,WarmBottle,Feeding,1,burn_risk,Hotspots develop in formula risk of burn injury,8,5,high,2026-04-05,open
+p031,Baby Powder Talc,SilkySmooth,Hygiene,1,inhalation,Talc inhalation risk linked to respiratory issues in infants,9,7,high,2026-03-08,returned
+p032,Night Light Projector,GloNight,Electronics,2,electrical,USB port accessible poses electrical hazard,7,3,high,2026-02-18,open
+p033,Baby Sunglasses,SunShield,Accessories,5,fit,Glasses too loose can be swallowed or choke infant,6,4,medium,2026-04-12,open
+p034,Organic Puree Honey Blend,HoneyPure,Food,9,ingredient_age_safety,Contains honey suitable only for 12 months plus,9,6,high,2026-03-25,returned
+p035,Latex Grip Socks,TinyToes,Clothing,6,allergen,Latex content can cause contact dermatitis in sensitive infants,7,4,high,2026-02-05,returned
+p036,Foam Floor Tiles,SafeFloor,Accessories,5,material,Foam pieces break off when chewed choking hazard,7,5,high,2026-03-20,returned
+p037,Baby Food Processor,PureBlend,Feeding,5,electrical,Motor overheats after 3 minutes of use,6,4,medium,2026-04-15,open
+p038,Plush Animal Toy,SoftFriend,Toys,1,suffocation,Long fur poses suffocation risk for infants under 12 months,8,6,high,2026-03-07,returned
+p039,Diaper Rash Cream,SkinGuard,Skincare,0,fragrance,Contains fragrance unsuitable for newborn sensitive skin,6,5,medium,2026-01-22,open
+p040,Grip Water Herbal,GripEase,Health,3,ingredient,Contains herbs not approved for infant consumption under 4 months,7,5,high,2026-02-12,returned
+p041,Stair Gate Pressure Mount,SafeGate,Safety,9,installation,Pressure mount gates not recommended at top of stairs,8,4,high,2026-03-18,open
+p042,Baby Food Pouches Mixed Veg,VegPure,Food,5,contamination,Reports of mold contamination inside pouches,8,7,high,2026-04-20,returned
+p043,Bottle Brush Nylon,CleanBottle,Feeding,0,material,Nylon bristles shed into bottles contaminating formula,7,5,high,2026-01-30,returned
+p044,Chest Sleeping Wedge,AntiReflux,Accessories,1,safety,Inclined sleeping not recommended AAP safe sleep guidelines,9,6,high,2026-03-03,returned
+p045,Clip On Fan Stroller,CoolBreeze,Accessories,3,electrical,Fan blades accessible to infant fingers,8,4,high,2026-04-10,open
+p046,Teething Amber Necklace,AmberHealer,Teething,3,choking_hazard,Necklace poses strangulation and choking risk per AAP warning,9,8,high,2026-02-25,returned
+p047,Baby Led Weaning Set,FirstFoods,Feeding,4,age_mismatch,BLW should not start before 6 months choking risk,7,6,high,2026-03-14,returned
+p048,Musical Plush Bear,TunePlay,Toys,2,volume,Toy speaker produces 85db plus sounds harmful to infant hearing,8,5,high,2026-02-08,returned
+p049,Baby Swimming Float Neck,AquaBaby,Accessories,2,safety,Neck floats not recommended no evidence of safety benefit,8,3,high,2026-04-18,returned
+p050,Hypoallergenic Baby Wipes,GentleClean,Hygiene,4,skin_irritation,Wipes contain preservative linked to contact allergy,6,5,medium,2026-03-22,open
+p051,Ergonomic Baby Spoon,ErgiFeed,Feeding,4,material_defect,Handle paint chips off into food,7,4,high,2026-02-16,returned
+p052,Baby Bath Support,SplashSafe,Health,1,safety,Support can tip when wet risk of submersion,9,5,high,2026-03-29,returned
+p053,Newborn Hat Knit,WarmHead,Clothing,0,sizing,Too small causes restriction marks on newborn head,5,3,medium,2026-01-18,exchanged
+p054,Soy Based Formula Stage 1,SoyStart,Feeding,2,ingredient,Soy formula not recommended before consulting pediatrician,6,5,medium,2026-02-22,open
+p055,Portable High Chair Clip On,TableSeat,Accessories,7,weight_limit,Rated for 12kg but unstable at 10kg,8,4,high,2026-04-03,returned

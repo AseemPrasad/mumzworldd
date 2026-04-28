@@ -6,6 +6,7 @@
 import logging
 import requests
 import json
+import re
 from typing import Optional
 
 from app.core.config import get_settings
@@ -32,6 +33,34 @@ def _build_user_message(prompt_template: str, product_summaries: list[dict]) -> 
         )
     lines.append(f"\n{prompt_template}")
     return "\n".join(lines)
+
+
+def _extract_json_from_content(content: str) -> Optional[str]:
+    """
+    Robustly extract a JSON object from LLM output.
+    Handles markdown fences, leading/trailing whitespace, and inline JSON.
+    """
+    content = content.strip()
+
+    # Strip ```json ... ``` or ``` ... ``` blocks
+    if content.startswith("```json"):
+        content = content[7:]
+    elif content.startswith("```"):
+        content = content[3:]
+    if content.endswith("```"):
+        content = content[:-3]
+    content = content.strip()
+
+    # If content starts with '{', try directly
+    if content.startswith("{"):
+        return content
+
+    # Try to find first { ... } block
+    match = re.search(r"\{.*\}", content, re.DOTALL)
+    if match:
+        return match.group(0)
+
+    return None
 
 
 def call_llm(
@@ -91,6 +120,47 @@ def call_llm(
         logger.error("LLM unexpected error: %s", e)
         return {"error": "Unexpected LLM error. Check server logs."}
 
+
+def _build_bilingual_prompt(conflict_data: dict, child_stage: dict, defer_true: bool) -> str:
+    """Build a dynamic bilingual prompt based on conflict data."""
+    product_name = conflict_data.get("product_name", "this product")
+    months = child_stage.get("months", "unknown")
+    confidence = float(conflict_data.get("confidence", 0.7))
+    evidence = conflict_data.get("evidence_source", "")
+    conflict_type = conflict_data.get("conflict_type", "safety concern")
+
+    hedge = "may be worth checking" if confidence < 0.75 else "has been identified as"
+
+    if defer_true:
+        return (
+            "Generate a bilingual EN/AR safety message that defers to a doctor. "
+            "Do NOT name any product and do NOT suggest alternatives. "
+            "English: clinical, specific, professional medical referral tone. "
+            "Arabic: formal, warm, doctor-authority foregrounded. "
+            "Return ONLY a raw JSON object with keys 'copy_en' and 'copy_ar'. No markdown."
+        )
+
+    return (
+        f"Generate a bilingual EN/AR alert for a parent about a product safety conflict.\n\n"
+        f"Product: {product_name}\n"
+        f"Baby age: {months} months\n"
+        f"Conflict type: {conflict_type} ({hedge} a conflict)\n"
+        f"Evidence: {evidence[:200]}\n"
+        f"Confidence: {confidence:.0%}\n\n"
+        "English copy rules:\n"
+        "- Authoritative and data-driven framing\n"
+        "- Clinical-adjacent tone with specific evidence\n"
+        "- 3-4 sentences maximum\n\n"
+        "Arabic copy rules:\n"
+        "- Warm, reassurance-first tone\n"
+        "- Community and family framing\n"
+        "- Doctor-authority invoked prominently\n"
+        "- Native Arabic — NOT a translation of the English\n"
+        "- 3-4 sentences maximum\n\n"
+        "Return ONLY a raw JSON object with keys 'copy_en' and 'copy_ar'. No markdown."
+    )
+
+
 def generate_bilingual_copy(conflict_data: dict, child_stage: dict, defer_true: bool) -> dict:
     """
     Layer 5: Generate bilingual EN/AR copy using OpenRouter JSON mode.
@@ -110,22 +180,10 @@ def generate_bilingual_copy(conflict_data: dict, child_stage: dict, defer_true: 
         "You are a parent-friendly AI for a baby e-commerce platform. "
         "Your job is to generate a specific alert regarding a product conflict. "
         "You must return ONLY a raw JSON object with two keys: 'copy_en' and 'copy_ar'. "
-        "Do not use markdown blocks."
+        "Do not use markdown blocks. Do not include any other text."
     )
-    
-    if defer_true:
-        user_message = (
-            "Generate an English and Arabic doctor-referral message. "
-            "Do not mention product names and do not suggest products. "
-            "For Arabic, use formal medical deferral language."
-        )
-    else:
-        user_message = (
-            f"Generate an English and Arabic message explaining that the user's baby is likely outgrowing '{conflict_data.get('product_name')}'. "
-            f"The baby is around {child_stage.get('months', 'unknown')} months old. "
-            f"Mention the following evidence: {conflict_data.get('evidence_source')}. "
-            "Rule! For English, use an authoritative, data-driven framing with statistics. For Arabic, use a warm, community-driven framing."
-        )
+
+    user_message = _build_bilingual_prompt(conflict_data, child_stage, defer_true)
 
     payload = {
         "model": settings.OPENROUTER_MODEL,
@@ -133,11 +191,11 @@ def generate_bilingual_copy(conflict_data: dict, child_stage: dict, defer_true: 
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ],
-        "max_tokens": 512,
+        "max_tokens": 600,
         "temperature": 0.3,
     }
-    
-    # Enable JSON mode if model supports it out of the box
+
+    # Enable JSON mode if model supports it
     if "openai" in settings.OPENROUTER_MODEL or "mistral" in settings.OPENROUTER_MODEL:
         payload["response_format"] = {"type": "json_object"}
 
@@ -157,31 +215,71 @@ def generate_bilingual_copy(conflict_data: dict, child_stage: dict, defer_true: 
         )
         resp.raise_for_status()
         data = resp.json()
-        content = data["choices"][0]["message"]["content"]
-        
-        # Clean formatting just in case
-        if content.startswith("```json"):
-            content = content.replace("```json", "").replace("```", "").strip()
-        elif content.startswith("```"):
-            content = content.replace("```", "").strip()
-            
-        result = json.loads(content)
-        return {
-            "copy_en": result.get("copy_en", _fallback_copy(conflict_data, child_stage, defer_true)["copy_en"]),
-            "copy_ar": result.get("copy_ar", _fallback_copy(conflict_data, child_stage, defer_true)["copy_ar"])
-        }
+        raw_content = data["choices"][0]["message"]["content"]
+
+        json_str = _extract_json_from_content(raw_content)
+        if json_str is None:
+            logger.warning("Could not extract JSON from LLM copy response — using fallback")
+            return _fallback_copy(conflict_data, child_stage, defer_true)
+
+        result = json.loads(json_str)
+        copy_en = result.get("copy_en")
+        copy_ar = result.get("copy_ar")
+
+        # Validate output — must have non-empty strings
+        if not copy_en or not copy_ar:
+            logger.warning("LLM returned empty copy fields — using fallback")
+            return _fallback_copy(conflict_data, child_stage, defer_true)
+
+        logger.info(
+            "Bilingual copy generated via LLM (EN: %d chars, AR: %d chars)",
+            len(copy_en), len(copy_ar),
+        )
+        return {"copy_en": copy_en, "copy_ar": copy_ar}
+
+    except json.JSONDecodeError as e:
+        logger.error("Bilingual copy JSON parse error: %s", e)
+        return _fallback_copy(conflict_data, child_stage, defer_true)
+    except requests.exceptions.Timeout:
+        logger.error("Bilingual copy LLM request timed out")
+        return _fallback_copy(conflict_data, child_stage, defer_true)
+    except requests.exceptions.HTTPError as e:
+        logger.error("Bilingual copy LLM HTTP error: %s", e)
+        return _fallback_copy(conflict_data, child_stage, defer_true)
     except Exception as e:
         logger.error("Bilingual LLM generation error: %s", e)
         return _fallback_copy(conflict_data, child_stage, defer_true)
 
+
 def _fallback_copy(c: dict, child_stage: dict, defer_true: bool) -> dict:
     if defer_true:
         return {
-            "copy_en": "Given the symptoms reported, please consult your pediatrician immediately.",
-            "copy_ar": "بناءً على الأعراض المذكورة، يُرجى استشارة طبيب الأطفال فورًا."
+            "copy_en": (
+                "Given the safety concern reported, please consult your pediatrician immediately. "
+                "Do not continue using this product until you have spoken with a healthcare professional."
+            ),
+            "copy_ar": (
+                "بناءً على المخاوف الأمنية المُبلَّغ عنها، يُرجى استشارة طبيب الأطفال فورًا. "
+                "لا تستمري في استخدام هذا المنتج حتى تتحدثي مع متخصص رعاية صحية."
+            ),
         }
-    confidence_hedge = "may be worth checking" if c.get("confidence", 0) < 0.75 else "is likely outgrown"
+
+    confidence = float(c.get("confidence", 0.7))
+    confidence_hedge = "may be worth reviewing" if confidence < 0.75 else "is likely no longer suitable"
+    months = child_stage.get("months", "this stage")
+    product_name = c.get("product_name", "this product")
+    evidence = c.get("evidence_source", "pediatric guidelines")
+
     return {
-        "copy_en": f"Your baby {confidence_hedge} the {c.get('product_name')}. 94% of moms shift at month {child_stage.get('months', 'N/A')}. Based on: {c.get('evidence_source')}.",
-        "copy_ar": f"يبدو أن طفلتك قد تجاوزت {c.get('product_name')}. في هذه المرحلة، يوصي معظم الأطباء بالتحول. دليل: {c.get('evidence_source')}."
+        "copy_en": (
+            f"{product_name} {confidence_hedge} for your baby at {months} months. "
+            f"Based on: {evidence[:100]}. "
+            f"Most families make this transition between months {months} and {int(months) + 2 if isinstance(months, int) else months + 2}. "  # noqa: E501
+            "Please consult your pediatrician if you have concerns."
+        ),
+        "copy_ar": (
+            f"يبدو أن {product_name} لم يعد مناسبًا لطفلتك في هذه المرحلة ({months} أشهر). "
+            "معظم العائلات في وضعك تجري هذا التحول في هذا الوقت. "
+            "نوصي باستشارة طبيب الأطفال للتأكد من الخيار الأنسب لطفلتك."
+        ),
     }
